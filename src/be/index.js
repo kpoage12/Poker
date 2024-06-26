@@ -1,17 +1,19 @@
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
-import Game from './public/static/js/Game.js';
+import Game from '../logic/Game.js';
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const port = 3000;
 
+// only one game at a time
 const game = new Game();
 
-app.use(express.static('public'));
+app.use(express.static('../static'));
 
+// this should be parameterized for multiple games
 app.get('/api/game', (req, res) => {
   res.json(game.getState());
 });

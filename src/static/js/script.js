@@ -5,11 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const socket = io();
 
+  const userName = ""
+
   socket.on('connect', () => {
     console.log('Connected to WebSocket server');
+
+    // get the player's name from a textBox [jon]
+    // or from the URL ?player=jon
+    // or from a cookie (only from a previously saved value)
+    // set userName = textBox.value
   });
 
-  socket.on('newGameState', (gameState) => {
+  socket.on('gameState', (gameState) => {
     // when anything changes, redraw the game
     console.log('Game state received:', gameState);
     
@@ -22,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const nameCell = document.createElement('td');
       const handCell = document.createElement('td');
       const betCell = document.createElement('td');
+
+      // if it's my turn, gameState.playerTurn === userName
+      // show the action buttons BET (AMOUNT) FOLD
 
       nameCell.textContent = player.name;
       handCell.textContent = player.hand.map(card => `${card.rank} of ${card.suit}`).join(', ');

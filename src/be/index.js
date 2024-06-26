@@ -19,12 +19,10 @@ const __dirname = dirname(__filename);
 const staticname = join(__dirname, '../static')
 console.log(`fn= ${__filename}, dn= ${__dirname} sn= ${staticname}`)
 
-const myLogger = function (req, res, next) {
-  console.log("logging")
-  console.log(req.baseUrl)
-  next()
-}
-app.use(myLogger)
+// const myLogger = function (req, res, next) {
+//   next()
+// }
+// app.use(myLogger)
 
 app.use(express.static(staticname));
 //  app.use(express.static(__dirname + '/public'));

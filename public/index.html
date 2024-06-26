@@ -1,9 +1,33 @@
 <!DOCTYPE html>
-<html>
-    <head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker Game</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Poker Game</h1>
+  <div id="game-container">
+    <table id="game-table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Hand</th>
+          <th>Bet</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="board-container">
+      <strong>Cards: <span id="board-size"></span></strong>
+    </div>
 
-    </head>
-    <body>
-        <h1>Poker</h1>
-    </body>
+    <div id="pot-container">
+      <strong>Pot: $<span id="pot-size">0</span></strong>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>

@@ -13,8 +13,12 @@ const user = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    }
+    },
 
+    chips: {
+        type: int,
+        default: 1000
+    }
 });
 
 function correctPassword (enteredPassword){

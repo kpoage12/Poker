@@ -9,9 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Connected to WebSocket server');
   });
 
-  socket.on('gameState', (gameState) => {
+  socket.on('newGameState', (gameState) => {
+    // when anything changes, redraw the game
     console.log('Game state received:', gameState);
+    
+    // clear the area gameTableBody
     gameTableBody.innerHTML = '';
+
+    // a row for each player
     gameState.players.forEach(player => {
       const row = document.createElement('tr');
       const nameCell = document.createElement('td');
@@ -28,7 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
       gameTableBody.appendChild(row);
     });
     
+    // draw shared cards
     cards.textContent = gameState.communityCards.map(card => `${card.rank} of ${card.suit}`).join(', ');
+    // draw the pot
     potSizeElement.textContent = gameState.pot;
   });
 });

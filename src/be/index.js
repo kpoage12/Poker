@@ -36,36 +36,54 @@ io.on('connection', (socket) => {
   console.log('a user connected');
   socket.emit('gameState', game.getGameState());
 
+
   socket.on('command', (cmd) => {
     console.log('Command received:', cmd);
     const [action, ...params] = cmd.split(' ');
-
-    if (action === 'addPlayer') {
-      const playerName = params.join(' ');
-      game.addPlayer(playerName);
-    } else if (action === 'start') {
-      game.startNewRound();
-    } else if (action === 'dealFlop') {
-      game.dealFlop();
-    } else if (action === 'dealTurn') {
-      game.dealTurn();
-    } else if (action === 'dealRiver') {
-      game.dealRiver();
-    } else if (action === 'bet') {
-      const playerName = params[0];
-      const amount = parseInt(params[1], 10);
-      const player = game.players.find(p => p.name === playerName);
-      if (player) {
-        game.placeBet(player, amount);
+    
+    if (action === 'addPlayer'){
+      game.addPlayer(params[0]);
+      io.emit('gameState', game.getGameState());
+    }
+    else{
+    if (action === 'start') {
+      try {
+        game.startNewRound();
+      } catch (error) {
+        console.error(error.message);
       }
-    } else if (action === 'fold') {
+    } else {
       const playerName = params[0];
       const player = game.players.find(p => p.name === playerName);
-      if (player) {
-        player.fold();
+
+      if (!player) {
+        console.log(`Player not found: ${playerName}`);
+        return;
+      }
+
+      if (action === 'bet') {
+        const amount = parseInt(params[1], 10);
+        game.placeBet(player, amount);
+      } else if (action === 'check') {
+        game.check(player);
+      } else if (action === 'call') {
+        const amount = parseInt(params[1], 10);
+        game.call(player, amount);
+      } else if (action === 'raise') {
+        const amount = parseInt(params[1], 10);
+        game.raise(player, amount);
+      } else if (action === 'fold') {
+        game.fold(player);
       }
     }
+
+      // Proceed to next betting round if all players have acted
+      if (game.allPlayersActed()) {
+        game.nextBettingRound();
+      }
+
     io.emit('gameState', game.getGameState());
+  }
   });
 
   socket.on('disconnect', () => {

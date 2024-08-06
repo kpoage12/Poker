@@ -8,6 +8,16 @@
 </head>
 <body>
   <h1>Poker Game</h1>
+  <div id="player-name-container">
+    <label for="player-name">Player Name:</label>
+    <input type="text" id="player-name" name="player-name">
+    <button id="add-player-button">Add Player</button>
+  </div>
+  <div>
+    <button id="start-game-button">Start Game</button>
+  </div>
+
+
   <div id="game-container">
     <table id="game-table">
       <thead>
@@ -24,8 +34,26 @@
     </div>
 
     <div id="pot-container">
-      <strong>Pot: $<span id="pot-size">0</span></strong>
+      <strong><span id="pot-size">0</span></strong>
     </div>
+
+    <div id="current-player">
+      <strong>Current Player: <span id="current-player-size">0</span></strong>
+    </div>
+
+    <div id="betting-round">
+      <strong><span id="betting-round-size">0</span></strong>
+    </div>
+
+    <div id="player-actions" style="display: none;">
+      <button id="fold-button">Fold</button>
+      <button id="check-button">Check</button>
+      <button id="call-button">Call</button>
+      <button id="raise-button">Raise</button>
+      <input type="number" id="raise-amount" placeholder="Raise Amount">
+    </div>
+
+    
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
   <script src="/js/script.js"></script>

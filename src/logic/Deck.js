@@ -11,6 +11,7 @@ export default class Deck {
             this.cards.push(new Card(suit, rank));
           });
         });
+        
         this.shuffle();
       }
     

@@ -1,51 +1,103 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const gameTableBody = document.querySelector('#game-table tbody');
+  const boardSizeElement = document.querySelector('#board-size')
   const potSizeElement = document.getElementById('pot-size');
-  const cards = document.getElementById('board-size');
+  const currentPlayerElement = document.getElementById('current-player');
+  const bettingRoundElement = document.getElementById('betting-round');
+  const addPlayerButton = document.getElementById('add-player-button');
+  const playerNameInput = document.getElementById('player-name');
+  const startGameButton = document.getElementById('start-game-button');
+  const playerActions = document.getElementById('player-actions');
+  const checkButton = document.getElementById('check-button');
+  const callButton = document.getElementById('call-button');
+  const raiseButton = document.getElementById('raise-button');
+  const raiseAmountInput = document.getElementById('raise-amount');
+  const foldButton = document.getElementById('fold-button');
 
   const socket = io();
-
-  const userName = ""
+  let currentPlayerName = '';
+  let currentBet = 0;
 
   socket.on('connect', () => {
     console.log('Connected to WebSocket server');
-
-    // get the player's name from a textBox [jon]
-    // or from the URL ?player=jon
-    // or from a cookie (only from a previously saved value)
-    // set userName = textBox.value
   });
 
   socket.on('gameState', (gameState) => {
-    // when anything changes, redraw the game
+    currentPlayerName = gameState.currentPlayer;
+    currentBet = gameState.currentBet;
     console.log('Game state received:', gameState);
-    
-    // clear the area gameTableBody
     gameTableBody.innerHTML = '';
-
-    // a row for each player
     gameState.players.forEach(player => {
       const row = document.createElement('tr');
       const nameCell = document.createElement('td');
       const handCell = document.createElement('td');
       const betCell = document.createElement('td');
 
-      // if it's my turn, gameState.playerTurn === userName
-      // show the action buttons BET (AMOUNT) FOLD
-
       nameCell.textContent = player.name;
-      handCell.textContent = player.hand.map(card => `${card.rank} of ${card.suit}`).join(', ');
+      handCell.textContent = player.hand.map(card => `${card.unicode}`).join(' ');
+      handCell.classList.add('hand');
+
       betCell.textContent = `$${player.bet}`;
 
       row.appendChild(nameCell);
       row.appendChild(handCell);
       row.appendChild(betCell);
       gameTableBody.appendChild(row);
+
+      if (gameState.currentPlayer) {
+        playerActions.style.display = 'block';
+      } else {
+        playerActions.style.display = 'none';
+      }
+  
     });
-    
-    // draw shared cards
-    cards.textContent = gameState.communityCards.map(card => `${card.rank} of ${card.suit}`).join(', ');
-    // draw the pot
-    potSizeElement.textContent = gameState.pot;
+    boardSizeElement.textContent = gameState.communityCards.map(card => `${card.unicode}`).join(' ');
+    potSizeElement.textContent = `Pot: $${gameState.pot}`;
+    currentPlayerElement.textContent = `Current Player: ${gameState.currentPlayer}`;
+    bettingRoundElement.textContent = `Betting Round: ${gameState.bettingRound}`;
+
+  
   });
+
+  addPlayerButton.addEventListener('click', () => {
+    const playerName = playerNameInput.value.trim();
+    if (playerName) {
+      socket.emit('command', `addPlayer ${playerName}`);
+      playerNameInput.value = '';
+    } else {
+      alert('Please enter a player name');
+    }
+  });
+
+  if (startGameButton){
+    startGameButton.addEventListener('click', () => {
+      socket.emit('command', 'start');
+    });
+  }
+
+  checkButton.addEventListener('click', () => {
+    socket.emit('command', `check ${currentPlayerName}`);
+  });
+
+  callButton.addEventListener('click', () => {
+    socket.emit('command', `call ${currentPlayerName}`);
+  });
+
+  raiseButton.addEventListener('click', () => {
+    const raiseAmount = parseInt(raiseAmountInput.value, 10);
+    if (!isNaN(raiseAmount) && raiseAmount >= 2*currentBet) {
+      socket.emit('command', `raise ${currentPlayerName} ${raiseAmount}`);
+      raiseAmountInput.value = '';
+    } else {
+      alert('Please enter a valid raise amount');
+    }
+  });
+
+  foldButton.addEventListener('click', () => {
+    socket.emit('command', `fold ${currentPlayerName}`);
+  })
+
+
+
 });

@@ -51,7 +51,7 @@ export default class HandEvaluator {
         const royalFlushCards = cards.filter(card => card.suit===suit && royalFlushRanks.includes(card.rank));
 
         if (royalFlushCards.length===5){
-            return true;
+            return royalFlushCards;
         }
     }
     return false;
@@ -59,28 +59,55 @@ export default class HandEvaluator {
   }
 
   static isStraightFlush(cards) {
-    // Implementation goes here
-    const suits = ['hearts', 'diamonds', 'spades', 'clubs'];
-    for (let suit of suits){
-        const royalFlushCards = cards.filter(card => card.suit===suit && royalFlushRanks.includes(card.rank));
-
-        if (royalFlushCards.length===5){
-            return true;
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    for (let suit of suits) {
+      const suitedCards = cards.filter(card => card.suit === suit);
+      if (suitedCards.length >= 5) {
+        const straightFlushCards = HandEvaluator.isStraight(suitedCards);
+        if (straightFlushCards) {
+          return straightFlushCards;
         }
+      }
     }
     return false;
-
   }
 
   static isFourOfAKind(cards) {
-    // Implementation goes here
     
+    const rankCounts = {};
+    for (let card of cards) {
+      const rankValue = HandEvaluator.getCardRankValue(card.rank);
+      rankCounts[rankValue] = (rankCounts[rankValue] || 0) + 1;
+    }
+
+    const fourOfAKindRank = Object.keys(rankCounts).find(rank => rankCounts[rank] === 4);
+    if (fourOfAKindRank) {
+      const fourOfAKindCards = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) === parseInt(fourOfAKindRank));
+      const kicker = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) !== parseInt(fourOfAKindRank))[0];
+      return [...fourOfAKindCards, kicker];
+    }
+
     return false;
 
   }
 
   static isFullHouse(cards) {
-    // Implementation goes here
+    const rankCounts = {};
+    for (let card of cards) {
+      const rankValue = HandEvaluator.getCardRankValue(card.rank);
+      rankCounts[rankValue] = (rankCounts[rankValue] || 0) + 1;
+    }
+
+    const threeOfAKindRank = Object.keys(rankCounts).find(rank => rankCounts[rank] === 3);
+
+    const twoOfAKindRank = Object.keys(rankCounts).find(rank => rankCounts[rank] === 2);
+
+    if (threeOfAKindRank && twoOfAKindRank) {
+      const threeOfAKindCards = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) === parseInt(threeOfAKindRank));
+      const twoOfAKindCards = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) === parseInt(twoOfAKindRank));
+      return [...threeOfAKindCards, ...twoOfAKindCards];    
+    }
+
     return false;
 
   }
@@ -99,30 +126,90 @@ export default class HandEvaluator {
   }
   
   static isStraight(cards) {
-    const ranks = [...new Set(cards.map(card => HandEvaluator.getCardRankValue(card.rank)))];
-    for (let i = 0; i <= ranks.length - 5; i++) {
-      if (ranks[i] - ranks[i + 4] === 4) {
-        return cards.filter(card => ranks.slice(i, i + 5).includes(HandEvaluator.getCardRankValue(card.rank)));
+    const rankValues = cards.map(card => HandEvaluator.getCardRankValue(card.rank));
+    const uniqueRanks = [...new Set(rankValues)];
+
+    // Check high straight (Ace as high)
+    for (let i = 0; i <= uniqueRanks.length - 5; i++) {
+      if (uniqueRanks[i] - uniqueRanks[i + 4] === 4) {
+        return cards.filter(card => uniqueRanks.slice(i, i + 5).includes(HandEvaluator.getCardRankValue(card.rank)));
       }
     }
+
+    // Check low straight (Ace as low)
+    const aceLowStraight = [14, 5, 4, 3, 2];
+    if (aceLowStraight.every(rank => uniqueRanks.includes(rank))) {
+      return cards.filter(card => aceLowStraight.includes(HandEvaluator.getCardRankValue(card.rank)));
+    }
+
     return false;
   }
   
   static isThreeOfAKind(cards) {
-    // Implementation goes here
-    return false;
+    
+    const rankCounts = {};
+    for (let card of cards) {
+      const rankValue = HandEvaluator.getCardRankValue(card.rank);
+      rankCounts[rankValue] = (rankCounts[rankValue] || 0) + 1;
+    }
 
+    const threeOfAKindRank = Object.keys(rankCounts).find(rank => rankCounts[rank] === 3);
+    if (threeOfAKindRank) {
+      const threeOfAKindCards = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) === parseInt(threeOfAKindRank));
+      const kickers = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) !== parseInt(threeOfAKindRank)).slice(0, 2);
+      return [...threeOfAKindCards, ...kickers];    
+    }
+    return false;
   }
 
   static isTwoPair(cards) {
-    // Implementation goes here
-    return false;
+    const rankCounts = {};
+    for (let card of cards) {
+      const rankValue = HandEvaluator.getCardRankValue(card.rank);
+      rankCounts[rankValue] = (rankCounts[rankValue] || 0) + 1;
+    }
 
+    const pairs = Object.keys(rankCounts).filter(rank => rankCounts[rank] === 2);
+    if (pairs.length >= 2) {
+      const twoPairCards = cards.filter(card => pairs.includes(String(HandEvaluator.getCardRankValue(card.rank)))).slice(0, 4);
+      const kicker = cards.filter(card => !pairs.includes(String(HandEvaluator.getCardRankValue(card.rank))))[0];
+      return [...twoPairCards, kicker];
+    }
+
+    return false;
   }
 
   static isOnePair(cards) {
-    // Implementation goes here
-    return false;
+    const rankCounts = {};
+    for (let card of cards) {
+      const rankValue = HandEvaluator.getCardRankValue(card.rank);
+      rankCounts[rankValue] = (rankCounts[rankValue] || 0) + 1;
+    }
 
+    const pairRank = Object.keys(rankCounts).find(rank => rankCounts[rank] === 2);
+
+    if (pairRank){
+      const pairCards = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) === parseInt(pairRank));
+      const kickers = cards.filter(card => HandEvaluator.getCardRankValue(card.rank) !== parseInt(pairRank)).slice(0, 3);
+
+      return [...pairCards, ...kickers]
+    }
+
+    return false;
   }
+
+  static compareHands(hand1, hand2) {
+    for (let i = 0; i < hand1.length; i++) {
+      const hand1Value = HandEvaluator.getCardRankValue(hand1[i].rank);
+      const hand2Value = HandEvaluator.getCardRankValue(hand2[i].rank);
+      if (hand1Value > hand2Value) {
+        return 1;
+      } else if (hand1Value < hand2Value) {
+        return -1;
+      }
+    }
+    return 0;
+  }
+
+
 }

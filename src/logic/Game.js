@@ -61,11 +61,32 @@ export default class Game {
 
   nextPlayer() {
     if (this.activePlayers.length === 0) {
+      console.log('No active players left.');
       return;
     }
-    this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
-    while (this.activePlayers[this.currentPlayerIndex].hasFolded){
-      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
+
+    let startIndex = this.currentPlayerIndex;
+
+    do {
+        // Move to the next player
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
+
+        // Check if we've looped all the way around to the starting player
+        if (this.currentPlayerIndex === startIndex) {
+            // If all players have either folded or acted, proceed to the next round
+            if (this.allPlayersActed()) {
+                this.nextBettingRound();
+                return;
+            }
+        }
+    } while (
+        this.activePlayers[this.currentPlayerIndex].hasFolded || 
+        (this.activePlayers[this.currentPlayerIndex].bet >= this.currentBet && 
+        this.actionsInCurrentRound.has(this.activePlayers[this.currentPlayerIndex].name))
+    );
+
+    if (!this.allPlayersActed()) {
+        console.log(`It's now ${this.activePlayers[this.currentPlayerIndex].name}'s turn.`);
     }
   }
 
@@ -80,6 +101,9 @@ export default class Game {
 
     if (amount > this.currentBet) {
       this.currentBet = amount;
+      this.actionsInCurrentRound.clear();
+      this.actionsInCurrentRound.set(player.name, 'raise');
+
     }
 
     this.nextPlayer();
@@ -111,12 +135,27 @@ export default class Game {
     this.pot += amount;
     this.actionsInCurrentRound.set(player.name, 'raise');
     this.currentBet = amount;
+    // Reset actions in the current round as the bet has increased
+    this.actionsInCurrentRound.clear();
+    this.actionsInCurrentRound.set(player.name, 'raise');
     this.nextPlayer();
   }
 
   fold(player) {
     player.fold();
     this.actionsInCurrentRound.set(player.name, 'fold');
+    const foldedPlayerIndex = this.activePlayers.indexOf(player);
+    
+    // Remove the folded player from the active players list
+    this.activePlayers = this.activePlayers.filter(p => p !== player);
+
+    if (this.activePlayers.length === 1) {
+      console.log(`${this.activePlayers[0].name} wins, all other players have folded!`);
+      // Handle round end logic, maybe auto-assign the pot to the remaining player
+      this.endRound();
+      return;
+    }
+    this.currentPlayerIndex--;
     this.nextPlayer();
   }
 
@@ -165,6 +204,12 @@ export default class Game {
   nextBettingRound() {
     this.actionsInCurrentRound.clear();
 
+    // Reset each player's bet to 0 at the start of a new betting round
+    this.activePlayers.forEach(player => {
+      player.bet = 0;
+    });
+  
+
     if (this.bettingRound === 0) {
       this.dealFlop();
     } else if (this.bettingRound === 1) {
@@ -180,9 +225,29 @@ export default class Game {
 
     this.bettingRound += 1;
     this.currentPlayerIndex = 0;
+    this.currentBet = 0;
+
+    while (this.activePlayers[this.currentPlayerIndex].hasFolded) {
+      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
+    }
   }
 
   allPlayersActed() {
-    return this.activePlayers.every(player => this.actionsInCurrentRound.has(player.name));
+    return this.activePlayers.every(player => 
+      player.hasFolded || 
+      (player.bet >= this.currentBet && this.actionsInCurrentRound.has(player.name))
+  );
+}
+
+  endRound() {
+    // Logic to end the current round, distribute the pot, etc.
+    console.log('Ending the round.');
+    // Example: assign pot to the last active player and reset for a new round
+    const winner = this.activePlayers[0];
+    winner.chips += this.pot;
+    this.pot = 0;
+    this.startNewRound();
+    return;
   }
+
 }

@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const raiseButton = document.getElementById('raise-button');
   const raiseAmountInput = document.getElementById('raise-amount');
   const foldButton = document.getElementById('fold-button');
+  const currentBetElement = document.getElementById('current-bet');
 
   const socket = io();
   let currentPlayerName = '';
@@ -33,16 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const nameCell = document.createElement('td');
       const handCell = document.createElement('td');
       const betCell = document.createElement('td');
+      const chipsCell = document.createElement('td');
 
       nameCell.textContent = player.name;
       handCell.textContent = player.hand.map(card => `${card.unicode}`).join(' ');
       handCell.classList.add('hand');
 
       betCell.textContent = `$${player.bet}`;
+      chipsCell.textContent = `$${player.chips}`;
 
       row.appendChild(nameCell);
       row.appendChild(handCell);
       row.appendChild(betCell);
+      row.appendChild(chipsCell);
       gameTableBody.appendChild(row);
 
       if (gameState.currentPlayer) {
@@ -56,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     potSizeElement.textContent = `Pot: $${gameState.pot}`;
     currentPlayerElement.textContent = `Current Player: ${gameState.currentPlayer}`;
     bettingRoundElement.textContent = `Betting Round: ${gameState.bettingRound}`;
-
+    currentBetElement.textContent = `Current Bet: ${gameState.currentBet}`;
   
   });
 
@@ -77,7 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   checkButton.addEventListener('click', () => {
-    socket.emit('command', `check ${currentPlayerName}`);
+    if (currentBet==0){
+      socket.emit('command', `check ${currentPlayerName}`);
+    }
+    else{
+      alert('Cannot check when active bet');
+
+    }
   });
 
   callButton.addEventListener('click', () => {

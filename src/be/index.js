@@ -14,7 +14,7 @@ const game = new Game();
 import { fileURLToPath } from 'url';
 import { join, dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(__filename); 
 
 const staticname = join(__dirname, '../static')
 console.log(`fn= ${__filename}, dn= ${__dirname} sn= ${staticname}`)
@@ -33,62 +33,60 @@ app.get('/api/game', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
-  socket.emit('gameState', game.getGameState());
+  console.log('A user connected:', socket.id);
 
-
-  socket.on('command', (cmd) => {
-    console.log('Command received:', cmd);
-    const [action, ...params] = cmd.split(' ');
-    
-    if (action === 'addPlayer'){
-      game.addPlayer(params[0]);
-      io.emit('gameState', game.getGameState());
-    }
-    else{
-    if (action === 'start') {
-      try {
-        game.startNewRound();
-      } catch (error) {
-        console.error(error.message);
-      }
+  socket.on('registerPlayer', (playerName) => {
+    console.log(`Registering player: ${playerName}`); // Debugging log
+    if (game.players.some(p => p.name === playerName)) {
+        socket.emit('registrationError', 'Player name already taken');
     } else {
-      const playerName = params[0];
-      const player = game.players.find(p => p.name === playerName);
+        game.addPlayer(playerName, socket.id);
+        console.log(`Player ${playerName} registered successfully`); // Debugging log
+        io.emit('gameState', game.getGameState()); // Broadcast updated game state to all clients
+        socket.emit('registrationSuccess', game.getPlayerState(playerName));
+    }
+});
 
-      if (!player) {
-        console.log(`Player not found: ${playerName}`);
+socket.on('playerAction', (actionData) => {
+    console.log("here");
+    const { playerName, action, amount } = actionData;
+    const player = game.getPlayerByName(playerName);
+
+    if (!player) {
+        console.log("JEUUSHsjuduB");
+        socket.emit('actionError', 'Invalid action or player');
         return;
-      }
-
-      if (action === 'bet') {
-        const amount = parseInt(params[1], 10);
-        game.placeBet(player, amount);
-      } else if (action === 'check') {
-        game.check(player);
-      } else if (action === 'call') {
-        const amount = parseInt(params[1], 10);
-        game.call(player, amount);
-      } else if (action === 'raise') {
-        const amount = parseInt(params[1], 10);
-        game.raise(player, amount);
-      } else if (action === 'fold') {
-        game.fold(player);
-      }
     }
 
-      // Proceed to next betting round if all players have acted
-      if (game.allPlayersActed()) {
-        game.nextBettingRound();
-      }
+    try {
+        if (action === 'check') {
+            console.log("check!");
 
+            game.check(player);
+        } else if (action === 'call') {
+            game.call(player);
+        } else if (action === 'raise') {
+            game.raise(player, amount);
+        } else if (action === 'fold') {
+            game.fold(player);
+        }
 
-    io.emit('gameState', game.getGameState());
-  }
+        io.emit('gameState', game.getGameState());
+    } catch (error) {
+        socket.emit('actionError', error.message);
+    }
+});
+
+  socket.on('startGame', () => {
+    console.log('Starting game...');
+    game.startNewRound(); // Start the game or a new round
+    io.emit('gameState', game.getGameState()); // Broadcast updated game state to all clients
   });
 
   socket.on('disconnect', () => {
-    console.log('user disconnected');
+      game.removePlayerBySocketId(socket.id);
+      io.emit('gameState', game.getPublicGameState());
+      console.log('User disconnected:', socket.id);
   });
 });
 

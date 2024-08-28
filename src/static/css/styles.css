@@ -1,134 +1,159 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
+  background-color: #f4f4f4;
   margin: 0;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-h1 {
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.container {
-  width: 100%;
-  max-width: 800px;
-}
-
-div.form-group {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-input[type="text"] {
-  width: 80%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-button {
-  display: inline-block;
-  padding: 10px 20px;
-  margin: 10px 5px 0 0;
-  font-size: 16px;
-  color: #fff;
-  background-color: #007bff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-#game-container {
-  width: 100%;
-  max-width: 800px;
-  background-color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  padding: 20px;
-  margin-top: 20px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-th, td {
-  padding: 10px;
-  border: 1px solid #ccc;
-  text-align: left;
-}
-
-th {
-  background-color: #007bff;
-  color: #fff;
-}
-
-td {
-  background-color: #f9f9f9;
-}
-
-td.hand {
-  font-size: 4rem; /* Increase font size for hand cells */
-}
-
-
-#board-container, #pot-container, #current-player, #betting-round {
-  margin: 10px 0;
-  font-size: 18px;
-}
-
-#board-container strong, #pot-container strong, #current-player strong, #betting-round strong {
-  color: #333;
-}
-
-#pot-size {
-  color: #007bff;
-}
-
-#current-player-size {
-  color: #28a745;
-}
-
-#betting-round-size {
-  color: #ffc107;
-}
-
-#player-name-container {
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-
+  height: 100vh;
 }
 
-#player-actions {
+h1, h2, h3 {
+  color: #333;
+}
+
+#name-entry-screen {
+  text-align: center;
+  margin-top: 50px;
+}
+
+#game-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
   margin-top: 20px;
+}
+
+#game-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+#game-table th, #game-table td {
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+#game-table th {
+  background-color: #007bff;
+  color: white;
+}
+
+#game-table td {
+  background-color: #f9f9f9;
+}
+
+#game-table td.hand {
+  font-size: 80px; 
+}
+
+
+#player-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+#player-actions button, #player-actions input[type="number"] {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#player-actions button {
+  background-color: #28a745;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+#player-actions button:hover {
+  background-color: #218838;
+}
+
+#player-actions input[type="number"] {
+  width: 100px;
+  border: 1px solid #ccc;
+}
+
+#community-cards {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 300px;
   text-align: center;
 }
 
-#board-size {
-  font-size: 4rem;
-  font-weight: normal;
+#community-cards span {
+  margin: 0 5px;
+  font-size: 80px;
+  color: #007bff;
+}
+
+#pot-size, #current-player {
+  font-size: 18px;
+  margin-top: 10px;
+  color: #333;
+}
+
+input[type="text"] {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 80%;
+  max-width: 300px;
+  margin-bottom: 20px;
+}
+
+#start-game-button {
+  background-color: #28a745;
+  color: white;
+  margin-bottom: 20px;
+}
+
+#start-game-button:hover {
+  background-color: #218838;
+}
+
+button#join-game-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  font-size: 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button#join-game-button:hover {
+  background-color: #0056b3;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }

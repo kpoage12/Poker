@@ -1,113 +1,157 @@
-
 document.addEventListener('DOMContentLoaded', () => {
-  const gameTableBody = document.querySelector('#game-table tbody');
-  const boardSizeElement = document.querySelector('#board-size')
-  const potSizeElement = document.getElementById('pot-size');
-  const currentPlayerElement = document.getElementById('current-player');
-  const bettingRoundElement = document.getElementById('betting-round');
-  const addPlayerButton = document.getElementById('add-player-button');
-  const playerNameInput = document.getElementById('player-name');
+  const socket = io("http://localhost:3000");
+
+  const nameEntryScreen = document.getElementById('name-entry-screen');
+  const gameScreen = document.getElementById('game-screen');
+  const playerNameInput = document.getElementById('player-name-input');
+  const joinGameButton = document.getElementById('join-game-button');
   const startGameButton = document.getElementById('start-game-button');
-  const playerActions = document.getElementById('player-actions');
+  const gameTableBody = document.querySelector('#game-table tbody');
+  const communityCardsDiv = document.getElementById('community-cards');
+  const potSizeSpan = document.getElementById('pot-size');
+  const currentPlayerSpan = document.getElementById('current-player');
   const checkButton = document.getElementById('check-button');
   const callButton = document.getElementById('call-button');
   const raiseButton = document.getElementById('raise-button');
-  const raiseAmountInput = document.getElementById('raise-amount');
   const foldButton = document.getElementById('fold-button');
-  const currentBetElement = document.getElementById('current-bet');
 
-  const socket = io();
-  let currentPlayerName = '';
-  let currentBet = 0;
 
-  socket.on('connect', () => {
-    console.log('Connected to WebSocket server');
-  });
+  let playerName = '';
+  let currentPlayer = '';
+
+  joinGameButton.addEventListener('click', () => {
+    playerName = playerNameInput.value.trim();
+    if (playerName) {
+        console.log('Emitting registerPlayer event for', playerName); // Debugging log
+        socket.emit('registerPlayer', playerName);
+    } else {
+        alert('Please enter a valid name');
+    }
+});
+
+startGameButton.addEventListener('click', () => {
+  socket.emit('startGame');
+});
+
+socket.on('registrationSuccess', (playerState) => {
+    console.log('Registration successful:', playerState); // Debugging log
+    nameEntryScreen.style.display = 'none';
+    gameScreen.style.display = 'block';
+    updatePlayerState(playerState);
+});
+
+socket.on('registrationError', (errorMessage) => {
+    alert(errorMessage);
+});
 
   socket.on('gameState', (gameState) => {
-    currentPlayerName = gameState.currentPlayer;
-    currentBet = gameState.currentBet;
-    console.log('Game state received:', gameState);
-    gameTableBody.innerHTML = '';
-    gameState.players.forEach(player => {
-      const row = document.createElement('tr');
+      updateGameState(gameState);
+      console.log(gameState);
+  });
+
+  socket.on('yourState', (playerState) => {
+      updatePlayerState(playerState);
+  });
+
+  function updatePlayerState(playerState) {
+      const playerRow = document.createElement('tr');
       const nameCell = document.createElement('td');
       const handCell = document.createElement('td');
       const betCell = document.createElement('td');
       const chipsCell = document.createElement('td');
 
-      nameCell.textContent = player.name;
-      handCell.textContent = player.hand.map(card => `${card.unicode}`).join(' ');
-      handCell.classList.add('hand');
+      nameCell.textContent = playerState.name;
+      handCell.innerHTML = playerState.hand.map(card => `${card.rank} of ${card.suit}`).join(', ');
+      betCell.textContent = `$${playerState.bet}`;
+      chipsCell.textContent = `$${playerState.chips}`;
 
-      betCell.textContent = `$${player.bet}`;
-      chipsCell.textContent = `$${player.chips}`;
+      playerRow.appendChild(nameCell);
+      playerRow.appendChild(handCell);
+      playerRow.appendChild(betCell);
+      playerRow.appendChild(chipsCell);
 
-      row.appendChild(nameCell);
-      row.appendChild(handCell);
-      row.appendChild(betCell);
-      row.appendChild(chipsCell);
-      gameTableBody.appendChild(row);
-
-      if (gameState.currentPlayer) {
-        playerActions.style.display = 'block';
-      } else {
-        playerActions.style.display = 'none';
-      }
-  
-    });
-    boardSizeElement.textContent = gameState.communityCards.map(card => `${card.unicode}`).join(' ');
-    potSizeElement.textContent = `Pot: $${gameState.pot}`;
-    currentPlayerElement.textContent = `Current Player: ${gameState.currentPlayer}`;
-    bettingRoundElement.textContent = `Betting Round: ${gameState.bettingRound}`;
-    currentBetElement.textContent = `Current Bet: ${gameState.currentBet}`;
-  
-  });
-
-  addPlayerButton.addEventListener('click', () => {
-    const playerName = playerNameInput.value.trim();
-    if (playerName) {
-      socket.emit('command', `addPlayer ${playerName}`);
-      playerNameInput.value = '';
-    } else {
-      alert('Please enter a player name');
-    }
-  });
-
-  if (startGameButton){
-    startGameButton.addEventListener('click', () => {
-      socket.emit('command', 'start');
-    });
+      gameTableBody.appendChild(playerRow);
   }
 
-  checkButton.addEventListener('click', () => {
-    if (currentBet==0){
-      socket.emit('command', `check ${currentPlayerName}`);
-    }
-    else{
-      alert('Cannot check when active bet');
+  function updateGameState(gameState) {
+    gameTableBody.innerHTML = '';
+    gameState.players.forEach(player => {
+        const playerRow = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        const handCell = document.createElement('td');
+        handCell.classList.add('hand');
+        const betCell = document.createElement('td');
+        const chipsCell = document.createElement('td');
 
+        nameCell.textContent = player.name;
+
+
+        if (!currentPlayer || player.name === playerName) {
+            handCell.textContent = player.hand.map(card => `${card.unicode}`).join(' ');
+        } 
+        else {
+            handCell.textContent = '🂠 🂠';
+        }
+
+        betCell.textContent = `$${player.bet}`;
+        chipsCell.textContent = `$${player.chips}`;
+
+        playerRow.appendChild(nameCell);
+        playerRow.appendChild(handCell);
+        playerRow.appendChild(betCell);
+        playerRow.appendChild(chipsCell);
+
+        gameTableBody.appendChild(playerRow);
+        /**if (gameState.currentPlayer === playerName) {
+            enableButtons();
+        } else {
+            disableButtons();
+        }    */
+    });
+
+    
+
+    communityCardsDiv.innerHTML = gameState.communityCards.map(card => `<span>${card.unicode}`).join(' ');
+    potSizeSpan.textContent = gameState.pot;
+    currentPlayer = gameState.currentPlayer
+    currentPlayerSpan.textContent = currentPlayer;
+      
+
+  }
+
+/** 
+  function enableButtons() {
+    checkButton.disabled = false;
+    callButton.disabled = false;
+    raiseButton.disabled = false;
+    foldButton.disabled = false;
+}
+
+function disableButtons() {
+    checkButton.disabled = true;
+    callButton.disabled = true;
+    raiseButton.disabled = true;
+    foldButton.disabled = true;
+}
+*/
+
+checkButton.addEventListener('click', () => {
+    console.log(`Check button clicked by ${playerName}`); // Debugging log
+    if (playerName === currentPlayer){
+        socket.emit('playerAction', { playerName, action: 'check' });
     }
-  });
+});
 
   callButton.addEventListener('click', () => {
-    socket.emit('command', `call ${currentPlayerName}`);
+      socket.emit('playerAction', { playerName, action: 'call' });
   });
 
   raiseButton.addEventListener('click', () => {
-    const raiseAmount = parseInt(raiseAmountInput.value, 10);
-    if (!isNaN(raiseAmount) && raiseAmount >= 2*currentBet) {
-      socket.emit('command', `raise ${currentPlayerName} ${raiseAmount}`);
-      raiseAmountInput.value = '';
-    } else {
-      alert('Please enter a valid raise amount');
-    }
+      const raiseAmount = parseInt(document.getElementById('raise-amount').value, 10);
+      socket.emit('playerAction', { playerName, action: 'raise', amount: raiseAmount });
   });
 
   foldButton.addEventListener('click', () => {
-    socket.emit('command', `fold ${currentPlayerName}`);
-  })
-
-
-
+      socket.emit('playerAction', { playerName, action: 'fold' });
+  });
 });

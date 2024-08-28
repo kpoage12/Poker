@@ -16,11 +16,10 @@ export default class Game {
     this.currentBet = 0; // Current bet amount
   }
 
-  addPlayer(name) {
-    const player = new Player(`${name}`);
+  addPlayer(name, socketId) {
+    const player = new Player(name, socketId); // Assuming you have a Player class
     this.players.push(player);
-    this.activePlayers.push(player);
-  }
+}
 
   startNewRound() {
     if (this.players.length === 0) {
@@ -164,6 +163,45 @@ export default class Game {
       return null;
     }
     return this.activePlayers[this.currentPlayerIndex];
+  }
+
+  removePlayerBySocketId(socketId) {
+    this.players = this.players.filter(player => player.socketId !== socketId);
+  }
+
+  getPlayerByName(name) {
+    return this.players.find(player => player.name === name);
+  }
+
+  updateActivePlayers() {
+    this.activePlayers = this.players.filter(player => !player.hasFolded);
+  }
+
+  getPlayerState(playerName) {
+    const player = this.getPlayerByName(playerName);
+    return {
+        name: player.name,
+        hand: player.hand,
+        chips: player.chips,
+        bet: player.bet,
+        hasFolded: player.hasFolded,
+    };
+  }
+
+  getPublicGameState() {
+    return {
+        players: this.players.map(player => ({
+            name: player.name,
+            bet: player.bet,
+            chips: player.chips,
+            hasFolded: player.hasFolded,
+        })),
+        communityCards: this.table.communityCards,
+        pot: this.pot,
+        currentPlayer: this.getCurrentPlayer() ? this.getCurrentPlayer().name : 'No active player',
+        bettingRound: this.bettingRound,
+        currentBet: this.currentBet
+    };
   }
 
   getGameState() {

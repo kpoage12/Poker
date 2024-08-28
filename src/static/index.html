@@ -1,67 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Poker Game</title>
-  <link rel="stylesheet" href="/css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Game</title>
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <h1>Poker Game</h1>
-  <div id="player-name-container">
-    <label for="player-name">Player Name:</label>
-    <input type="text" id="player-name" name="player-name">
-    <button id="add-player-button">Add Player</button>
-  </div>
-  <div>
-    <button id="start-game-button">Start Game</button>
-  </div>
-
-
-  <div id="game-container">
-    <table id="game-table">
-      <thead>
-        <tr>
-          <th>Player</th>
-          <th>Hand</th>
-          <th>Bet</th>
-          <th>Chips</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div id="board-container">
-      <strong>Cards:<span id="board-size"></span></strong>
+    <div id="name-entry-screen">
+        <h1>Enter Your Name to Join the Game</h1>
+        <input type="text" id="player-name-input" placeholder="Enter your name">
+        <button id="join-game-button">Join Game</button>
     </div>
 
-    <div id="pot-container">
-      <strong><span id="pot-size">0</span></strong>
+    <div id="game-screen" style="display: none;">
+        <h1>Poker Game</h1>
+        <button id="start-game-button">Start Game</button>
+        <table id="game-table">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Hand</th>
+                    <th>Bet</th>
+                    <th>Chips</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div id="table-info">
+            <h2>Community Cards</h2>
+            <div id="community-cards"></div>
+            <h3>Pot: <span id="pot-size"></span></h3>
+            <h3>Current Player: <span id="current-player"></span></h3>
+        </div>
+
+        <div id="player-actions">
+            <button id="check-button">Check</button>
+            <button id="call-button">Call</button>
+            <button id="raise-button">Raise</button>
+            <input type="number" id="raise-amount" placeholder="Enter amount to raise">
+            <button id="fold-button">Fold</button>
+        </div>
     </div>
 
-    <div id="current-player">
-      <strong>Current Player: <span id="current-player-size">0</span></strong>
-    </div>
-
-    <div id="betting-round">
-      <strong><span id="betting-round-size">0</span></strong>
-    </div>
-
-    <div id="current-bet">
-      <strong>Current Bet: <span id="current-bet">0</span></strong>
-    </div>
-
-
-    <div id="player-actions" style="display: none;">
-      <button id="fold-button">Fold</button>
-      <button id="check-button">Check</button>
-      <button id="call-button">Call</button>
-      <button id="raise-button">Raise</button>
-      <input type="number" id="raise-amount" placeholder="Raise Amount">
-    </div>
-
-    
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
-  <script src="/js/script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+    <script src="/js/script.js"></script>
 </body>
 </html>

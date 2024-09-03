@@ -4,23 +4,39 @@ import Table from './table.js';
 import HandEvaluator from './HandEvaluator.js';
 
 export default class Game {
-  constructor() {
+
+  constructor(gameId, blinds=10) {
+    this.gameId = gameId;
     this.deck = new Deck();
-    this.players = [];
+    this.players = new Map();
+    this.blinds = blinds;
     this.table = new Table();
     this.currentPlayerIndex = 0;
+    this.currPlayerName = '';
     this.pot = 0;
     this.bettingRound = 0; // 0: pre-flop, 1: flop, 2: turn, 3: river
-    this.activePlayers = []; // Players who have not folded
+
     this.actionsInCurrentRound = new Map();
     this.currentBet = 0; // Current bet amount
   }
 
   addPlayer(name, socketId) {
-    const player = new Player(name, socketId); // Assuming you have a Player class
-    this.players.push(player);
+    if (this.players.has(name)) {
+      throw new Error('Player already exists in this game');
+    }else{
+      let position = this.players.size
+      // check if that's too many players
+      this.players.set(name, new Player(name, socketId, position));
+    }
 }
-
+  setPlayersActive(){
+    let activePlayers = Array.from(this.players.values());
+    activePlayers.forEach(player => {
+      player.fold(false);
+      player.hand = [];
+      player.bet = 0;
+    });
+  }
   startNewRound() {
     if (this.players.length === 0) {
       throw new Error('Cannot start the game without players');
@@ -28,17 +44,15 @@ export default class Game {
 
     this.deck = new Deck();
     this.table.reset();
-    this.players.forEach(player => player.resetForNewRound());
     this.dealInitialCards();
     this.bettingRound = 0;
-    this.currentPlayerIndex = 0;
-    this.activePlayers = [...this.players];
+    this.setPlayersActive()
     this.actionsInCurrentRound.clear();
-    this.currentBet = 0;
+    this.currentBet = this.blinds;
   }
 
   dealInitialCards() {
-    this.players.forEach(player => {
+    Array.from(this.players.values()).forEach(player => {
       player.receiveCard(this.deck.draw());
       player.receiveCard(this.deck.draw());
     });
@@ -59,36 +73,22 @@ export default class Game {
   }
 
   nextPlayer() {
-    if (this.activePlayers.length === 0) {
-      console.log('No active players left.');
-      return;
+    if (this.allPlayersActed()) {
+        this.nextBettingRound();
+        return;
     }
-
-    let startIndex = this.currentPlayerIndex;
-
-    do {
-        // Move to the next player
-        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
-
-        // Check if we've looped all the way around to the starting player
-        if (this.currentPlayerIndex === startIndex) {
-            // If all players have either folded or acted, proceed to the next round
-            if (this.allPlayersActed()) {
-                this.nextBettingRound();
-                return;
-            }
-        }
-    } while (
-        this.activePlayers[this.currentPlayerIndex].hasFolded || 
-        (this.activePlayers[this.currentPlayerIndex].bet >= this.currentBet && 
-        this.actionsInCurrentRound.has(this.activePlayers[this.currentPlayerIndex].name))
-    );
+    // Loop through the players until we find the next active player
+    let guys = Array.from(this.players.values()).map(g=>{}).sort((a,b)=>{a.position - b.position});
+    let activePlayers = guys.filter(player => !player.hasFolded);
+    let idx = activePlayers.findIndex(player => player.name === this.currPlayerName);
+    let orderedPlayers = activePlayers.slice(idx).concat(activePlayers.slice(0, idx));
+    let nextPlayer = orderedPlayers[1];
+    let currPlayerName = nextPlayer.name;
 
     if (!this.allPlayersActed()) {
-        console.log(`It's now ${this.activePlayers[this.currentPlayerIndex].name}'s turn.`);
+        console.log(`It's now ${currPlayerName}'s turn.`);
     }
   }
-
   placeBet(player, amount) {
     if (amount < this.currentBet) {
       throw new Error('Bet amount must be at least the current bet');
@@ -102,7 +102,6 @@ export default class Game {
       this.currentBet = amount;
       this.actionsInCurrentRound.clear();
       this.actionsInCurrentRound.set(player.name, 'raise');
-
     }
 
     this.nextPlayer();
@@ -143,42 +142,32 @@ export default class Game {
   fold(player) {
     player.fold();
     this.actionsInCurrentRound.set(player.name, 'fold');
-    const foldedPlayerIndex = this.activePlayers.indexOf(player);
+    let activePlayers = Array.from(this.players.values()).filter(player => !player.hasFolded)
     
-    // Remove the folded player from the active players list
-    this.activePlayers = this.activePlayers.filter(p => p !== player);
-
-    if (this.activePlayers.length === 1) {
-      console.log(`${this.activePlayers[0].name} wins, all other players have folded!`);
+    if (activePlayers.length === 1) {
+      console.log(`${activePlayers[0].name} wins, all other players have folded!`);
       // Handle round end logic, maybe auto-assign the pot to the remaining player
       this.endRound();
       return;
     }
-    this.currentPlayerIndex--;
     this.nextPlayer();
   }
 
   getCurrentPlayer() {
-    if (this.activePlayers.length === 0) {
+    let activePlayers = Array.from(this.players.values()).filter(player => !player.hasFolded)
+    if (activePlayers.length === 0) {
       return null;
     }
-    return this.activePlayers[this.currentPlayerIndex];
+    return this.players.get(this.currPlayerName);
   }
 
   removePlayerBySocketId(socketId) {
-    this.players = this.players.filter(player => player.socketId !== socketId);
-  }
-
-  getPlayerByName(name) {
-    return this.players.find(player => player.name === name);
-  }
-
-  updateActivePlayers() {
-    this.activePlayers = this.players.filter(player => !player.hasFolded);
+    let guys = Array.from(this.players.values()).filter(player => player.socketId !== socketId);
+    this.players.delete(guys[0].name);
   }
 
   getPlayerState(playerName) {
-    const player = this.getPlayerByName(playerName);
+    const player = this.players.get(playerName);
     return {
         name: player.name,
         hand: player.hand,
@@ -206,8 +195,9 @@ export default class Game {
 
   getGameState() {
     return {
-      players: this.players.map(player => ({
+      players: Array.from(this.players.values()).map(player => ({
         name: player.name,
+        position: player.position,
         hand: player.hand,
         bet: player.bet,
         chips: player.chips,
@@ -225,7 +215,8 @@ export default class Game {
     let bestHand = null;
     let winner = null;
   
-    this.activePlayers.forEach(player => {
+    activePlayers = Array.from(this.players.values()).filter(player => !player.hasFolded)
+    activePlayers.forEach(player => {
       const playerCards = player.hand.concat(this.table.communityCards);
       const playerBestHand = HandEvaluator.evaluateHand(playerCards);
   
@@ -243,7 +234,8 @@ export default class Game {
     this.actionsInCurrentRound.clear();
 
     // Reset each player's bet to 0 at the start of a new betting round
-    this.activePlayers.forEach(player => {
+    let activePlayers = Array.from(this.players.values()).filter(player => !player.hasFolded)
+    activePlayers.forEach(player => {
       player.bet = 0;
     });
   
@@ -265,13 +257,14 @@ export default class Game {
     this.currentPlayerIndex = 0;
     this.currentBet = 0;
 
-    while (this.activePlayers[this.currentPlayerIndex].hasFolded) {
-      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
+    while (activePlayers[this.currentPlayerIndex].hasFolded) {
+      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % activePlayers.length;
     }
   }
 
   allPlayersActed() {
-    return this.activePlayers.every(player => 
+    let activePlayers = Array.from(this.players.values()).filter(player => !player.hasFolded)
+    return activePlayers.every(player => 
       player.hasFolded || 
       (player.bet >= this.currentBet && this.actionsInCurrentRound.has(player.name))
   );
@@ -281,7 +274,8 @@ export default class Game {
     // Logic to end the current round, distribute the pot, etc.
     console.log('Ending the round.');
     // Example: assign pot to the last active player and reset for a new round
-    const winner = this.activePlayers[0];
+    let activePlayers = Array.from(this.players.values()).filter(player => !player.hasFolded)
+    const winner = activePlayers[0];
     winner.chips += this.pot;
     this.pot = 0;
     this.startNewRound();

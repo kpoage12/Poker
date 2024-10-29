@@ -2,6 +2,7 @@ import express from 'express';
 import http, { get } from 'http';
 import { Server } from 'socket.io';
 import Game from '../logic/Game.js';
+import GameList from '../logic/GameList.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -9,15 +10,7 @@ const io = new Server(server);
 const port = 3000;
 
 // active games in memory
-const games = new Map();
-
-function getGame(gameId) {
-    let game = games.get(gameId);
-    if (!game) {
-        throw new Error('No game with that id');
-    }
-    return game;
-}
+const games = new GameList();
 
 import { fileURLToPath } from 'url';
 import { join, dirname } from 'path';
@@ -34,16 +27,18 @@ app.get('/api/game/:gameId', (req, res) => {
     const gameId = req.params.gameId;
     // Assuming getState can now accept a gameId to fetch specific game state
     try{
-        let guy = getGame(gameId);
+        let guy = games.getGame(gameId);
         res.json(guy.getState());
     }catch(error){
         res.json({error: 'No game with that id'});
     }   
   });
+
   app.post('/api/login', (req, res) => {
     // get name from request body
     res.cookie('playerId', req.body.playerName, { httpOnly: true, maxAge: 900000 });
   });
+
   app.post('/api/game/:gameId', (req, res) => {
     const gameId = req.params.gameId;
     
@@ -57,9 +52,16 @@ app.get('/api/game/:gameId', (req, res) => {
     }   
   });
 
+
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
+    socket.on('loginPlayer', (playerName) => {
+        console.log('Logging player in:', playerName);
+        socket.emit('yourState', playerName);
+    });
+    
   socket.on('registerPlayer', (gameId, playerName) => {
     let g = games.get(gameId)
     console.log(`Registering player: ${playerName}`); // Debugging log
@@ -74,7 +76,7 @@ io.on('connection', (socket) => {
 });
 
 socket.on('playerAction', (actionData) => {
-    const {gameId, playerName, action, amount } = actionData;
+    const {gameId, playerName, action, amount} = actionData;
     let g = games.get(gameId)
     const player = g.getPlayerByName(playerName);
 
@@ -101,7 +103,6 @@ socket.on('playerAction', (actionData) => {
         socket.emit('actionError', error.message);
     }
 });
-
   socket.on('startGame', (gameId) => {
     console.log('Starting game...');
     let g = games.get(gameId)

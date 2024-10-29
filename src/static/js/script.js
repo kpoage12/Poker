@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const nameEntryScreen = document.getElementById('name-entry-screen');
   const gameScreen = document.getElementById('game-screen');
   const playerNameInput = document.getElementById('player-name-input');
-  const joinGameButton = document.getElementById('join-game-button');
+  const enterNameButton = document.getElementById('enter-name-button');
   const startGameButton = document.getElementById('start-game-button');
   const gameTableBody = document.querySelector('#game-table tbody');
   const communityCardsDiv = document.getElementById('community-cards');
@@ -15,9 +15,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const raiseButton = document.getElementById('raise-button');
   const foldButton = document.getElementById('fold-button');
 
-
   let playerName = '';
   let currentPlayer = '';
+
+  enterNameButton.addEventListener('click', () => {
+    playerName = playerNameInput.value.trim();
+    if (playerName){
+        console.log('Loging player in:', playerName);
+        socket.emit('loginPlayer', playerName);
+    }else {
+        alert('Please enter a valid name');
+    }
+  });
 
   joinGameButton.addEventListener('click', () => {
     playerName = playerNameInput.value.trim();

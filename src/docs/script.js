@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const socket = io("http://localhost:3000");
+  const socket = io("https://poker-mw4z.onrender.com");
 
   const nameEntryScreen = document.getElementById('name-entry-screen');
   const gameScreen = document.getElementById('game-screen');

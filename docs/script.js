@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const socket = io("https://poker-mw4z.onrender.com");
+  const socket = io("https://poker-mw4z.onrender.com", {
+    transports: ['websocket', 'polling']
+  });
 
   const nameEntryScreen = document.getElementById('name-entry-screen');
   const gameScreen = document.getElementById('game-screen');

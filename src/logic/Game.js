@@ -1,6 +1,6 @@
 import Deck from './Deck.js';
 import Player from './Player.js'
-import Table from './table.js';
+import Table from './Table.js';
 import HandEvaluator from './HandEvaluator.js';
 
 export default class Game {

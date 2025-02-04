@@ -6,7 +6,7 @@ import Game from '../logic/Game.js';
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const port = 3000;
+const port = process.env.PORT || 4000;
 
 // only one game at a time
 const game = new Game();

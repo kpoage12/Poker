@@ -6,7 +6,7 @@ import Game from '../logic/Game.js';
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const port = process.env.PORT || 4000;
+const port =  3000;
 
 // only one game at a time
 const game = new Game();
@@ -16,7 +16,7 @@ import { join, dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename); 
 
-const staticname = join(__dirname, '../static')
+const staticname = join(__dirname, '../docs')
 console.log(`fn= ${__filename}, dn= ${__dirname} sn= ${staticname}`)
 
 // const myLogger = function (req, res, next) {

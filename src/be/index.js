@@ -53,7 +53,6 @@ socket.on('playerAction', (actionData) => {
     const player = game.getPlayerByName(playerName);
 
     if (!player) {
-        console.log("JEUUSHsjuduB");
         socket.emit('actionError', 'Invalid action or player');
         return;
     }
